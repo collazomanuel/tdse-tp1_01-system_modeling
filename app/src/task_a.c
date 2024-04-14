@@ -47,22 +47,23 @@
 /* Application & Tasks includes. */
 #include "board.h"
 #include "app.h"
+#include "task_a_fsm.h"
+#include "task_a_queue.h"
 
 /********************** macros and definitions *******************************/
 #define G_TASK_A_CNT_INI	0u
 
-#define TASK_A_CNT_INI		0u
-#define TASK_A_CNT_MAX		100000u
-
 #define TASK_A_DEL_INI		0u
-#define TASK_A_DEL_MAX		20u
+#define TASK_A_DEL_MAX		50u
 
 /********************** internal data declaration ****************************/
+s_task_a_t	state_task_a;
+e_task_a_t	event_task_a;
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-const char *p_task_a 		= "Task A - Blocking Code";
+const char *p_task_a 		= "Task A (System Modeling)";
 
 /********************** external data declaration *****************************/
 uint32_t g_task_a_cnt;
@@ -77,72 +78,69 @@ void task_a_init(void *parameters)
 
 	/* Print out: Task execution counter */
 	LOGGER_LOG("   %s = %d\r\n", GET_NAME(g_task_a_cnt), (int)g_task_a_cnt);
+
+	state_task_a = STATE_TASK_A_0;
+	event_task_a = EVENT_TASK_A_0;
+	init_queue_event_task_a();
+
+	/* Print out: Task execution FSM */
+	LOGGER_LOG("   %s = %d\r\n", GET_NAME(state_task_a), (int)state_task_a);
+	LOGGER_LOG("   %s = %d\r\n", GET_NAME(event_task_a), (int)event_task_a);
 }
 
 void task_a_update(void *parameters)
 {
-	/* Memory Layout of C Programs (https://www.geeksforgeeks.org/) */
-	/* Storage Classes in C (https://www.geeksforgeeks.org/) */
-	/* C Variables (https://www.geeksforgeeks.org/) */
-	/* Local Variable in C (https://www.geeksforgeeks.org/) */
-	/*
-	 * A variable declared within a function or a block of code is called a
-	 * local variable. Local variables are frequently used to temporarily
-	 * store data in a defined scope where they can be accessed and
-	 * manipulated.
-	 */
-	#if (TEST_X == TEST_0)
-
-	uint32_t task_a_cnt = TASK_A_CNT_INI;
-
-	#endif
-
-	#if (TEST_X == TEST_1)
-
-	#endif
-
-	#if (TEST_X == TEST_2)
-
-	/* Here Chatbot Artificial Intelligence generated code */
-
-	#endif
-
 	/* Update Task A Counter */
 	g_task_a_cnt++;
 
-	/* Print out: Application Update */
-	LOGGER_LOG("  %s is is running - %s\r\n", GET_NAME(task_a_update), p_task_a);
+	static uint32_t then_task_a = TASK_A_DEL_INI;
+	static uint32_t now_task_a  = TASK_A_DEL_INI;
 
-	/* Print out: Task execution counter */
-	LOGGER_LOG("   %s = %d\r\n", GET_NAME(g_task_a_cnt), (int)g_task_a_cnt);
+	now_task_a = HAL_GetTick();
+	if ((now_task_a - then_task_a) >= TASK_A_DEL_MAX)
+	{
+		/* Reset then = now */
+		then_task_a = now_task_a;
+	}
 
-	/* Blocking and Non-Blocking in Node.js (https://www.geeksforgeeks.org/) */
-	/*
-	 * Blocking: It refers to the blocking of further operation until the
-	 * current operation finishes.
-	 * Blocking methods are executed synchronously.
-	 * Synchronously means that the program is executed line by line.
-	 * The program waits until the called function or the operation
-	 * returns.
-	 * */
-	#if (TEST_X == TEST_0)
+	if (true == any_event_task_a())
+	{
+		state_task_a = get_event_task_a();
+		switch (state_task_a)
+		{
+			case STATE_TASK_A_0:
 
-	for (task_a_cnt = TASK_A_CNT_INI; task_a_cnt < TASK_A_CNT_MAX; task_a_cnt++);
+				if (EVENT_TASK_A_1 == event_task_a)
+					state_task_a =STATE_TASK_A_1;
 
-	#endif
+				if (EVENT_TASK_A_2 == event_task_a)
+						state_task_a =STATE_TASK_A_2;
 
-	#if (TEST_X == TEST_1)
+				break;
 
-	/* Wait for TASK_A_DEL_MAX mS */
-	HAL_Delay(TASK_A_DEL_MAX);
+			case STATE_TASK_A_1:
 
-	#endif
+				if (EVENT_TASK_A_0 == event_task_a)
+					state_task_a =STATE_TASK_A_0;
 
-	#if (TEST_X == TEST_2)
+				if (EVENT_TASK_A_2 == event_task_a)
+						state_task_a =STATE_TASK_A_2;
 
-	/* Here Chatbot Artificial Intelligence generated code */
+				break;
 
-	#endif
+			case STATE_TASK_A_2:
+
+				if (EVENT_TASK_A_0 == event_task_a)
+					state_task_a =STATE_TASK_A_0;
+
+				if (EVENT_TASK_A_1 == event_task_a)
+					state_task_a =STATE_TASK_A_1;
+
+			default:
+
+				break;
+		}
+	}
 }
 
 /********************** end of file ******************************************/

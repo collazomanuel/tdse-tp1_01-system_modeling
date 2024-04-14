@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * @file   : task_c.c
+ * @file   : task_a_queue.c
  * @date   : Set 26, 2023
  * @author : Juan Manuel Cruz <jcruz@fi.uba.ar> <jcruz@frba.utn.edu.ar>
  * @version	v1.0.0
@@ -47,77 +47,68 @@
 /* Application & Tasks includes. */
 #include "board.h"
 #include "app.h"
+#include "task_a_fsm.h"
+#include "task_a_queue.h"
 
 /********************** macros and definitions *******************************/
-#define G_TASK_C_CNT_INI			0u
-#define G_TICK_CNT_INI				0u
+#define EVENT_UNDEFINED	(255)
+#define MAX_EVENTS		(16)
 
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-const char *p_task_c 		= "Task C - Update By Time Code";
+struct
+{
+	uint32_t	head;
+	uint32_t	tail;
+	uint32_t	count;
+	e_task_a_t	queue[MAX_EVENTS];
+} queue_task_a;
 
 /********************** external data declaration *****************************/
-uint32_t g_task_c_cnt;
 
 /********************** external functions definition ************************/
-void task_c_init(void *parameters)
+void init_queue_event_task_a(void)
 {
-	/* Print out: Task Initialized */
-	LOGGER_LOG("  %s is running - %s\r\n", GET_NAME(task_c_init), p_task_c);
+	uint32_t i;
 
-	g_task_c_cnt = G_TASK_C_CNT_INI;
-	g_tick_cnt = G_TICK_CNT_INI;
+	queue_task_a.head = 0;
+	queue_task_a.tail = 0;
+	queue_task_a.count = 0;
 
-	/* Print out: Task execution counter */
-	LOGGER_LOG("   %s = %d\r\n", GET_NAME(g_task_c_cnt), (int)g_task_c_cnt);
+	for (i = 0; i < MAX_EVENTS; i++)
+		queue_task_a.queue[i] = EVENT_UNDEFINED;
 }
 
-void task_c_update(void *parameters)
+void put_event_task_a(e_task_a_t event)
 {
-	bool b_time_update_required = false;
+	queue_task_a.count++;
+	queue_task_a.queue[queue_task_a.head++] = event;
 
-	/* Update Task C Counter */
-	g_task_c_cnt++;
+	if (MAX_EVENTS == queue_task_a.head)
+		queue_task_a.head = 0;
+}
 
-	/* Print out: Application Update */
-	LOGGER_LOG("  %s is running - %s\r\n", GET_NAME(task_c_update), p_task_c);
+e_task_a_t get_event_task_a(void)
 
-	/* Print out: Task Updated and execution counter */
-	LOGGER_LOG("   %s = %d\r\n", GET_NAME(g_task_c_cnt), (int)g_task_c_cnt);
+{
+	e_task_a_t	event;
 
-	/* Protect shared resource (g_tick_cnt) */
-	__asm("CPSID i");	/* disable interrupts*/
-    if (0 < g_tick_cnt)
-    {
-    	g_tick_cnt--;
-    	b_time_update_required = true;
-    }
-    __asm("CPSIE i");	/* enable interrupts*/
+	queue_task_a.count--;
+	event = queue_task_a.queue[queue_task_a.tail];
+	queue_task_a.queue[queue_task_a.tail++] = EVENT_UNDEFINED;
 
-    while (b_time_update_required)
-    {
-		/* Here run code that needs update by time */
-    	/*
-    	 * For example, update Software Timers
-    	 *
-    	 */
+	if (queue_task_a.tail == MAX_EVENTS)
+		queue_task_a.tail = 0;
 
-		/* Protect shared resource (tick_cnt) */
-		__asm("CPSID i");	/* disable interrupts*/
-		if (0 < g_tick_cnt)
-		{
-			g_tick_cnt--;
-			b_time_update_required = true;
-		}
-		else
-		{
-			b_time_update_required = false;
-		}
-		__asm("CPSIE i");	/* enable interrupts*/
-	}
+	return event;
+}
+
+bool any_event_task_a(void)
+{
+  return (queue_task_a.head != queue_task_a.tail);
 }
 
 /********************** end of file ******************************************/
